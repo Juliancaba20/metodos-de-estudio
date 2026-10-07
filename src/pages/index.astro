@@ -1,0 +1,125 @@
+---
+import '../styles/global.css';
+
+const archivos = import.meta.glob('../metodos/*.json', { eager: true });
+const metodos = Object.values(archivos).map((a) => a.default);
+
+const niveles = ['Variable', 'Limitado', 'Moderado', 'Sólido'];
+const filtros = {
+  todos: 'Todos',
+  poco: 'Tengo poco tiempo',
+  memorizar: 'Hay mucho que memorizar',
+  comprender: 'Necesito comprender',
+  grupo: 'Quiero estudiar en grupo',
+};
+const descripcion =
+  'Catálogo gratuito de métodos de estudio para estudiantes: cómo se aplica cada uno, dónde falla y qué respaldo tiene en la evidencia.';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Métodos de estudio: catálogo para estudiantes</title>
+    <meta name="description" content={descripcion} />
+    <meta property="og:title" content="Métodos de estudio: catálogo para estudiantes" />
+    <meta property="og:description" content={descripcion} />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Source+Serif+4:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main>
+      <h1>Métodos de estudio: qué existe y qué dice la evidencia</h1>
+      <p>
+        Un catálogo para que cada estudiante conozca las opciones y elija con información. No hay un método
+        obligatorio: cada ficha explica cómo se aplica, para qué sirve, dónde falla y cuánto respaldo tiene.
+      </p>
+      <p class="mut">Proyecto gratuito y sin fines de lucro. No pide datos ni registro.</p>
+
+      <h2>Catálogo</h2>
+      <p>
+        Si lo desea, filtre por la situación en la que se encuentra. Es opcional: sin filtro se ven todos los
+        métodos.
+      </p>
+      <div class="chips" id="chips" role="group" aria-label="Filtrar por situación">
+        {Object.entries(filtros).map(([k, v]) => <button type="button" data-k={k} aria-pressed={k === 'todos' ? 'true' : 'false'}>{v}</button>)}
+      </div>
+
+      <div id="list">
+        {metodos.map((m) => (
+          <details data-tags={m.t.join(' ')}>
+            <summary>
+              <b>{m.n}</b>
+              <span class="q">{m.q}</span>
+              <span class="ev">
+                <span class="bar" aria-hidden="true">
+                  {[1, 2, 3].map((i) => <i class={m.l >= i ? 'on' : ''} />)}
+                </span>
+                Respaldo: {niveles[m.l]}
+              </span>
+            </summary>
+            <dl class="body">
+              <div><dt>Cómo se aplica</dt><dd><ol>{m.p.map((x) => <li>{x}</li>)}</ol></dd></div>
+              <div><dt>Esfuerzo</dt><dd>{m.e}</dd></div>
+              <div><dt>Útil para</dt><dd>{m.u}</dd></div>
+              <div><dt>Dónde falla</dt><dd>{m.f}</dd></div>
+              <div><dt>Qué dice la evidencia</dt><dd>{m.r}</dd></div>
+            </dl>
+          </details>
+        ))}
+      </div>
+
+      <h2>Comparación rápida</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Método</th><th>Respaldo</th><th>Esfuerzo</th><th>Útil para</th></tr></thead>
+          <tbody>
+            {metodos.map((m) => <tr><td>{m.n}</td><td>{niveles[m.l]}</td><td>{m.e}</td><td>{m.u}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Sobre los niveles de respaldo</h2>
+      <p>
+        Los niveles (sólido, moderado, limitado, variable) son orientativos. Resumen cuánta investigación sostiene
+        que el método mejora la retención o el rendimiento, y no si "le sirve" a una persona en particular. Que un
+        método tenga poco respaldo no significa que no funcione, sino que se estudió poco o que los resultados no
+        son claros.
+      </p>
+      <div class="note">
+        <p>
+          La idea de adaptar el estudio a un "estilo de aprendizaje" (visual, auditivo, kinestésico) no cuenta con
+          respaldo experimental sólido (Pashler et al., 2008), por eso no figura como método.
+        </p>
+      </div>
+      <p>Fuentes de partida:</p>
+      <ul>
+        <li>Dunlosky et al. (2013). <i>Improving Students' Learning With Effective Learning Techniques</i>. Psychological Science in the Public Interest.</li>
+        <li>Pashler et al. (2008). <i>Learning Styles: Concepts and Evidence</i>. Psychological Science in the Public Interest.</li>
+        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4031794/">Efecto de la prueba, recuperación activa y repetición espaciada en el currículo médico</a> (PMC).</li>
+        <li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11661899/">Revisión sobre estrategias de estudio y rendimiento en educación médica</a> (PMC, 2024).</li>
+      </ul>
+      <footer>Contenido en revisión. Las correcciones y sugerencias son bienvenidas.</footer>
+    </main>
+
+    <script>
+      const chips = document.querySelectorAll('#chips button');
+      const fichas = document.querySelectorAll('#list details');
+      chips.forEach((b) =>
+        b.addEventListener('click', () => {
+          const k = b.dataset.k;
+          chips.forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+          fichas.forEach((d) => {
+            d.hidden = k !== 'todos' && !d.dataset.tags.split(' ').includes(k);
+          });
+        })
+      );
+    </script>
+  </body>
+</html>
