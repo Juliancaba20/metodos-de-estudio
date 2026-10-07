@@ -1,10 +1,16 @@
 ---
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource-variable/source-serif-4';
 import '../styles/global.css';
 
 const archivos = import.meta.glob('../metodos/*.json', { eager: true });
-const metodos = Object.values(archivos).map((a) => a.default);
+const metodos = Object.entries(archivos).map(([ruta, a]) => ({
+  ...a.default,
+  id: ruta.split('/').pop().replace(/^\d+-|\.json$/g, ''),
+}));
 
 const niveles = ['Variable', 'Limitado', 'Moderado', 'Sólido'];
+const marca = ['◇', '○', '◐', '●'];
 const filtros = {
   todos: 'Todos',
   poco: 'Tengo poco tiempo',
@@ -12,6 +18,11 @@ const filtros = {
   comprender: 'Necesito comprender',
   grupo: 'Quiero estudiar en grupo',
 };
+const grupos = [
+  { t: 'Respaldo sólido', d: 'Investigación abundante y coherente. Son los métodos con más apoyo.', niv: [3] },
+  { t: 'Respaldo moderado', d: 'Buenos resultados en varios contextos, con menos estudios en medicina.', niv: [2] },
+  { t: 'Respaldo limitado o variable', d: 'Poca investigación, o resultados que dependen de cómo se aplique.', niv: [1, 0] },
+];
 const descripcion =
   'Catálogo gratuito de métodos de estudio para estudiantes: cómo se aplica cada uno, dónde falla y qué respaldo tiene en la evidencia.';
 ---
@@ -21,105 +32,132 @@ const descripcion =
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Métodos de estudio: catálogo para estudiantes</title>
+    <title>Métodos de estudio: qué existe y qué dice la evidencia</title>
     <meta name="description" content={descripcion} />
-    <meta property="og:title" content="Métodos de estudio: catálogo para estudiantes" />
+    <meta property="og:title" content="Métodos de estudio: qué existe y qué dice la evidencia" />
     <meta property="og:description" content={descripcion} />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Source+Serif+4:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
   </head>
   <body>
-    <main>
-      <h1>Métodos de estudio: qué existe y qué dice la evidencia</h1>
-      <p>
-        Un catálogo para que cada estudiante conozca las opciones y elija con información. No hay un método
-        obligatorio: cada ficha explica cómo se aplica, para qué sirve, dónde falla y cuánto respaldo tiene.
-      </p>
-      <p class="mut">Proyecto gratuito y sin fines de lucro. No pide datos ni registro.</p>
+    <a class="skip" href="#catalogo">Saltar al catálogo</a>
+    <div class="wrap">
+      <header class="top">
+        <h1>Métodos de estudio</h1>
+        <p class="sub">Qué existe y qué dice la evidencia. No hay un método obligatorio: cada ficha explica cómo se aplica, dónde falla y cuánto respaldo tiene, para que cada estudiante elija con información.</p>
+        <p class="mut">Proyecto gratuito y sin fines de lucro. No pide datos ni registro.</p>
+      </header>
 
-      <h2>Catálogo</h2>
-      <p>
-        Si lo desea, filtre por la situación en la que se encuentra. Es opcional: sin filtro se ven todos los
-        métodos.
-      </p>
-      <div class="chips" id="chips" role="group" aria-label="Filtrar por situación">
-        {Object.entries(filtros).map(([k, v]) => <button type="button" data-k={k} aria-pressed={k === 'todos' ? 'true' : 'false'}>{v}</button>)}
-      </div>
+      <div class="grid">
+        <aside aria-label="Filtros">
+          <h2>Buscar</h2>
+          <input id="q" type="search" placeholder="Nombre del método" aria-label="Buscar método por nombre" />
+          <h2>Situación (opcional)</h2>
+          <div class="f" id="f" role="group" aria-label="Filtrar por situación">
+            {Object.entries(filtros).map(([k, v]) => <button type="button" data-k={k} aria-pressed={k === 'todos' ? 'true' : 'false'}>{v}</button>)}
+          </div>
+          <h2>Niveles de respaldo</h2>
+          <ul class="leg">
+            {[3, 2, 1, 0].map((n) => (
+              <li data-l={n}><b>{marca[n]} {niveles[n]}</b> <span>{['depende de cómo se aplique', 'poca investigación', 'buenos resultados, menos estudios en medicina', 'investigación abundante y coherente'][n]}</span></li>
+            ))}
+          </ul>
+          <button id="toggle" type="button">Abrir todos los detalles</button>
+        </aside>
 
-      <div id="list">
-        {metodos.map((m) => (
-          <details data-tags={m.t.join(' ')}>
-            <summary>
-              <b>{m.n}</b>
-              <span class="q">{m.q}</span>
-              <span class="ev">
-                <span class="bar" aria-hidden="true">
-                  {[1, 2, 3].map((i) => <i class={m.l >= i ? 'on' : ''} />)}
-                </span>
-                Respaldo: {niveles[m.l]}
-              </span>
-            </summary>
-            <dl class="body">
-              <div><dt>Cómo se aplica</dt><dd><ol>{m.p.map((x) => <li>{x}</li>)}</ol></dd></div>
-              <div><dt>Esfuerzo</dt><dd>{m.e}</dd></div>
-              <div><dt>Útil para</dt><dd>{m.u}</dd></div>
-              <div><dt>Dónde falla</dt><dd>{m.f}</dd></div>
-              <div><dt>Qué dice la evidencia</dt><dd>{m.r}</dd></div>
-            </dl>
-          </details>
-        ))}
-      </div>
+        <main id="catalogo">
+          <p id="cnt" aria-live="polite">Mostrando {metodos.length} de {metodos.length} métodos</p>
+          {grupos.map((g) => (
+            <section class="grp">
+              <h2>{g.t}</h2>
+              <p>{g.d}</p>
+              <div class="cards">
+                {metodos.filter((m) => g.niv.includes(m.l)).map((m) => (
+                  <article class="card" id={m.id} data-l={m.l} data-tags={m.t.join(' ')} data-n={m.n.toLowerCase()}>
+                    <h3><a href={'#' + m.id} style="text-decoration:none;color:inherit">{m.n}</a></h3>
+                    <span class="lv" aria-hidden="true">{marca[m.l]} </span><span class="lv">Respaldo: {niveles[m.l]}</span>
+                    <p class="q">{m.q}</p>
+                    <dl>
+                      <div><dt>Esfuerzo</dt><dd>{m.e}</dd></div>
+                      <div><dt>Útil para</dt><dd>{m.u}</dd></div>
+                      <div><dt>Dónde falla</dt><dd>{m.f}</dd></div>
+                    </dl>
+                    <details>
+                      <summary>Cómo se aplica y qué dice la evidencia</summary>
+                      <ol>{m.p.map((x) => <li>{x}</li>)}</ol>
+                      <p>{m.r}</p>
+                    </details>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+          <p id="vacio" hidden>Ningún método coincide con la búsqueda. Pruebe con otro nombre o quite el filtro.</p>
 
-      <h2>Comparación rápida</h2>
-      <div class="scroll">
-        <table>
-          <thead><tr><th>Método</th><th>Respaldo</th><th>Esfuerzo</th><th>Útil para</th></tr></thead>
-          <tbody>
-            {metodos.map((m) => <tr><td>{m.n}</td><td>{niveles[m.l]}</td><td>{m.e}</td><td>{m.u}</td></tr>)}
-          </tbody>
-        </table>
-      </div>
+          <h2 class="t">Comparación rápida</h2>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Método</th><th>Respaldo</th><th>Esfuerzo</th><th>Útil para</th></tr></thead>
+              <tbody>
+                {metodos.map((m) => <tr data-l={m.l}><td><a href={'#' + m.id}>{m.n}</a></td><td class="lvl">{marca[m.l]} {niveles[m.l]}</td><td>{m.e}</td><td>{m.u}</td></tr>)}
+              </tbody>
+            </table>
+          </div>
 
-      <h2>Sobre los niveles de respaldo</h2>
-      <p>
-        Los niveles (sólido, moderado, limitado, variable) son orientativos. Resumen cuánta investigación sostiene
-        que el método mejora la retención o el rendimiento, y no si "le sirve" a una persona en particular. Que un
-        método tenga poco respaldo no significa que no funcione, sino que se estudió poco o que los resultados no
-        son claros.
-      </p>
-      <div class="note">
-        <p>
-          La idea de adaptar el estudio a un "estilo de aprendizaje" (visual, auditivo, kinestésico) no cuenta con
-          respaldo experimental sólido (Pashler et al., 2008), por eso no figura como método.
-        </p>
+          <h2 class="t">Sobre los niveles de respaldo</h2>
+          <div class="src">
+            <p>Los niveles son orientativos. Resumen cuánta investigación sostiene que el método mejora la retención o el rendimiento, y no si "le sirve" a una persona en particular. Que un método tenga poco respaldo no significa que no funcione, sino que se estudió poco o que los resultados no son claros.</p>
+            <div class="note"><p>La idea de adaptar el estudio a un "estilo de aprendizaje" (visual, auditivo, kinestésico) no cuenta con respaldo experimental sólido (Pashler et al., 2008), por eso no figura como método.</p></div>
+            <p>Fuentes de partida:</p>
+            <ul>
+              <li>Dunlosky et al. (2013). <i>Improving Students' Learning With Effective Learning Techniques</i>. Psychological Science in the Public Interest.</li>
+              <li>Pashler et al. (2008). <i>Learning Styles: Concepts and Evidence</i>. Psychological Science in the Public Interest.</li>
+              <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4031794/">Efecto de la prueba, recuperación activa y repetición espaciada en el currículo médico</a> (PMC).</li>
+              <li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11661899/">Revisión sobre estrategias de estudio y rendimiento en educación médica</a> (PMC, 2024).</li>
+            </ul>
+          </div>
+        </main>
       </div>
-      <p>Fuentes de partida:</p>
-      <ul>
-        <li>Dunlosky et al. (2013). <i>Improving Students' Learning With Effective Learning Techniques</i>. Psychological Science in the Public Interest.</li>
-        <li>Pashler et al. (2008). <i>Learning Styles: Concepts and Evidence</i>. Psychological Science in the Public Interest.</li>
-        <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4031794/">Efecto de la prueba, recuperación activa y repetición espaciada en el currículo médico</a> (PMC).</li>
-        <li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11661899/">Revisión sobre estrategias de estudio y rendimiento en educación médica</a> (PMC, 2024).</li>
-      </ul>
       <footer>Contenido en revisión. Las correcciones y sugerencias son bienvenidas.</footer>
-    </main>
+    </div>
 
     <script>
-      const chips = document.querySelectorAll('#chips button');
-      const fichas = document.querySelectorAll('#list details');
-      chips.forEach((b) =>
+      const cards = [...document.querySelectorAll('.card')];
+      const btns = document.querySelectorAll('#f button');
+      const q = document.getElementById('q');
+      const cnt = document.getElementById('cnt');
+      const vacio = document.getElementById('vacio');
+      const toggle = document.getElementById('toggle');
+      let k = 'todos';
+      function aplicar() {
+        const t = q.value.trim().toLowerCase();
+        let n = 0;
+        cards.forEach((c) => {
+          const ok = (k === 'todos' || c.dataset.tags.split(' ').includes(k)) && c.dataset.n.includes(t);
+          c.hidden = !ok;
+          if (ok) n++;
+        });
+        document.querySelectorAll('.grp').forEach((g) => (g.hidden = !g.querySelector('.card:not([hidden])')));
+        cnt.textContent = `Mostrando ${n} de ${cards.length} métodos`;
+        vacio.hidden = n > 0;
+      }
+      btns.forEach((b) =>
         b.addEventListener('click', () => {
-          const k = b.dataset.k;
-          chips.forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
-          fichas.forEach((d) => {
-            d.hidden = k !== 'todos' && !d.dataset.tags.split(' ').includes(k);
-          });
+          k = b.dataset.k;
+          btns.forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+          aplicar();
         })
       );
+      q.addEventListener('input', aplicar);
+      let abiertos = false;
+      toggle.addEventListener('click', () => {
+        abiertos = !abiertos;
+        cards.forEach((c) => (c.querySelector('details').open = abiertos));
+        toggle.textContent = abiertos ? 'Cerrar todos los detalles' : 'Abrir todos los detalles';
+      });
+      if (location.hash) {
+        const d = document.querySelector(location.hash + ' details');
+        if (d) d.open = true;
+      }
     </script>
   </body>
 </html>
